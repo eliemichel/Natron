@@ -10,27 +10,58 @@ most dependencies required by Natron.
 
 ## Packaged dependencies
 
-Clone the [MINGW-packages](https://github.com/MrKepzie/MINGW-packages) repository:
+First open the MSYS2 terminal and go to your copy of Natron repository:
 
-    cd tools/Windows
-    git clone https://github.com/MrKepzie/MINGW-packages
+    cd /c/path/to/natron/
+    
+**NB:** For those not used to MSYS2/unix env, do not forget to use only forward slashes (`/`) and replace `C:\` by `/c/`.
 
 Set the environment variable `MINGW_PACKAGES_PATH` to the location of
-the `MINGW-packages`directory.
+the `tools/MINGW-packages` directory.
+
+    export MINGW_PACKAGES_PATH=$(pwd)/tools/MINGW-packages
 
 Using `pacman`, the MSYS2 package manager, install the following
 packages:
 
-toolchain yasm gsm gdbm db python2 boost libjpeg-turbo libpng
-libtiff giflib lcms2 openjpeg LibRaw pixman cairo
-openssl freetype fontconfig eigen3 pango librsvg libzip cmake
+    toolchain yasm gsm gdbm db python2 boost libjpeg-turbo libpng
+    libtiff giflib lcms2 openjpeg libraw pixman cairo
+    openssl freetype fontconfig eigen3 pango librsvg libzip cmake
+    wget tar diffutils file gawk gettext grep make patch patchutils
+    pkg-config sed unzip git bison flex rsync zip
 
-wget tar diffutils file gawk gettext grep make patch patchutils
-pkg-config sed unzip git bison flex rsync zip
+For instance, first search for the full package name using e.g. `pacman -Ss boost`, then install the package with `mingw-w64-x86_64-boost` for a 64 bit build. Here is the full install commands of 64 bit dependencies:
+
+    pacman -S mingw-w64-x86_64-toolchain yasm mingw-w64-x86_64-gsm gdbm db python2 mingw-w64-x86_64-boost mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-libpng
+    pacman -S mingw-w64-x86_64-libtiff mingw-w64-x86_64-giflib mingw-w64-x86_64-lcms2 mingw-w64-x86_64-openjpeg mingw-w64-x86_64-libraw mingw-w64-x86_64-pixman mingw-w64-x86_64-cairo
+    pacman -S openssl mingw-w64-x86_64-freetype mingw-w64-x86_64-fontconfig mingw-w64-x86_64-eigen3 mingw-w64-x86_64-pango mingw-w64-x86_64-librsvg mingw-w64-x86_64-libzip cmake
+    pacman -S wget tar diffutils file gawk gettext grep make patch patchutils
+    pacman -S pkg-config sed unzip git bison flex rsync zip
 
 ## Dependencies to build manually
 
+You can actually install them from repositories if the version number match:
+
+    pacman -S mingw-w64-x86_64-ffmpeg mingw-w64-x86_64-imagemagick mingw-w64-x86_64-opencolorio-git mingw-w64-x86_64-openexr mingw-w64-x86_64-qt4 mingw-w64-x86_64-seexpr
+
 ### *FFmpeg 3.0.2*
+
+    cd ..
+    git clone https://git.ffmpeg.org/ffmpeg.git
+    cd ffmpeg
+    git checkout n3.0.2
+
+From the `MinGW 64-bit` terminal:
+
+    ./configure
+    make
+    make install
+
+**NB:** If there is an error while configuring with `awk` and a missing `msys-mpfr-6.dll`, you may try the very dirty `ln -s /usr/bin/msys-mpfr-4.dll /usr/bin/msys-mpfr-6.dll`.
+
+Add the local lib to `pkg-config` search path:
+
+    export $PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
 
 ### *ImageMagick 6.3.9*
 
@@ -42,6 +73,9 @@ pkg-config sed unzip git bison flex rsync zip
 
 ### *Qt 4.8.7*
 
+### SeExpr
+
+https://www.disneyanimation.com/technology/seexpr.html
 
 ## Configuration
 
@@ -51,9 +85,7 @@ Natron uses the OpenFX API, before building you should make sure it is up to dat
 
 For that, go under Natron and type
 
-```
-git submodule update -i --recursive
-```
+    git submodule update -i --recursive
 
 ### Download OpenColorIO-Configs
 
@@ -99,18 +131,40 @@ Natron's nodes are contained in separate repositories. To use the default nodes,
     https://github.com/NatronGitHub/openfx-misc
     https://github.com/NatronGitHub/openfx-io
 
-
 You'll find installation instructions in the README of both these repositories. Both openfx-misc and openfx-io have submodules as well.
+
+For instance, for openfx-misc, in the `MSYS2` terminal:
+
+    cd .. # assuming you were still within your copy of the Natron repository
+    git clone https://github.com/NatronGitHub/openfx-misc Natron-openfx-misc
+    cd Natron-openfx-misc
+    git submodule update -i -r
+    git checkout Natron-2.3.10
+
+Then, in the `MinGW 64-bit` terminal:
+
+    make BITS=64 CONFIG=relwithdebinfo CXXFLAGS_ADD=-fopenmp LDFLAGS_ADD=-fopenmp
+
+**NB:** If there is an error with code 127, try to just call the make command again.
+
+Repeat for `openfx-io`.
+
+**NB:** If there is a missing `tinydir/tinydir.h`, try to `cd IOSupport/SequenceParsing; git submodule update -i -r`.
 
 Plugins must be installed in /usr/OFX/Plugins on Linux
 Or in a directory named "Plugins" located in the parent directory where the binary lies, e.g.:
-
 
     bin/
         Natron
     Plugins/
         IO.ofx.bundle
 
+If you followed the previous instructions:
+
+    cd ..
+    mkdir Natron/bin
+    mkdir Natron/Plugins
+    cp -r  Natron-openfx-misc/Misc/MINGW64_NT-10.0-64-relwithdebinfo/Misc.ofx.bundle Natron/Plugins
 
 ## Build
 
