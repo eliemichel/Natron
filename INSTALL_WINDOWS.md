@@ -114,7 +114,6 @@ LIBS is the path to the libs
 
     ----- copy and paste the following in a terminal -----
     cat > config.pri << EOF
-    boost: LIBS += -lboost_serialization
     expat: LIBS += -lexpat
     expat: PKGCONFIG -= expat
     cairo: PKGCONFIG -= cairo
@@ -177,7 +176,7 @@ If everything has been installed and configured correctly, it should build witho
 
 If you want to build in DEBUG mode change the qmake call to this line:
 
-    qmake -r CONFIG+=debug
+    qmake -r CONFIG+=debug target.path=/c/src/Natron/bin
 
 Some debug options are available for developers of Natron and you can see them in the
 global.pri file. To enable an option just add `CONFIG+=<option>` in the qmake call.
